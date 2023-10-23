@@ -25,57 +25,90 @@ class _LogBottomSheetState extends State<LogBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    final FormFieldSetter<String> onSaved;
 
-    return SafeArea(
-      child: Container(
-        height: MediaQuery.of(context).size.height / 2 + bottomInset,
-        color: Colors.white,
-        child: Padding(
-          padding: EdgeInsets.only(bottom: bottomInset),
-          child: Padding(
-            padding: EdgeInsets.only(left: 8.0, right: 8.0, top: 16.0),
-            child: Form(
-              key: formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _Content(
-                    onSaved: (String? val) {
-                      content = val;
-                    },
-                    initialValue: content ?? '',
-                  ),
-                  SizedBox(height: 16.0),
-                  FutureBuilder<List<CategoryColor>>(
-                      future: GetIt.I<LocalDatabase>().getCategoryColors(),
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData &&
-                            selectedColorId == null &&
-                            snapshot.data!.isNotEmpty) {
-                          selectedColorId = snapshot.data![0].id;
-                        }
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).requestFocus(FocusNode());
+      },
+      child: FutureBuilder<Log>(
+          future: widget.logId == null
+              ? null
+              : GetIt.I<LocalDatabase>().getLogById(widget.logId!),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Center(
+                child: Text('스케줄을 불러올 수 없습니다.'),
+              );
+            }
 
-                        return _ColorPicker(
-                          colors: snapshot.hasData ? snapshot.data! : [],
-                          selectedColorId: selectedColorId,
-                          colorIdSetter: (int id) {
-                            setState(() {
-                              selectedColorId = id;
-                            });
-                          },
-                        );
-                      }),
-                  // SizedBox(height: 8.0),
-                  _SaveButton(
-                    onPressed: onSavePressed,
+            // FutureBuilder 처음 실행됐고
+            // 로딩중일때
+            if (snapshot.connectionState != ConnectionState.none &&
+                !snapshot.hasData) {
+              return Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+
+            if (snapshot.hasData && content == null) {
+              content = snapshot.data!.content;
+              selectedColorId = snapshot.data!.colorId;
+            }
+
+            return SafeArea(
+              child: Container(
+                height: MediaQuery.of(context).size.height / 2 + bottomInset,
+                color: Colors.white,
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: bottomInset),
+                  child: Padding(
+                    padding: EdgeInsets.only(left: 8.0, right: 8.0, top: 16.0),
+                    child: Form(
+                      key: formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(height: 16.0),
+                          _Content(
+                            onSaved: (String? val) {
+                              content = val;
+                            },
+                            initialValue: content ?? '',
+                          ),
+                          SizedBox(height: 16.0),
+                          FutureBuilder<List<CategoryColor>>(
+                              future:
+                                  GetIt.I<LocalDatabase>().getCategoryColors(),
+                              builder: (context, snapshot) {
+                                if (snapshot.hasData &&
+                                    selectedColorId == null &&
+                                    snapshot.data!.isNotEmpty) {
+                                  selectedColorId = snapshot.data![0].id;
+                                }
+
+                                return _ColorPicker(
+                                  colors:
+                                      snapshot.hasData ? snapshot.data! : [],
+                                  selectedColorId: selectedColorId,
+                                  colorIdSetter: (int id) {
+                                    setState(() {
+                                      selectedColorId = id;
+                                    });
+                                  },
+                                );
+                              }),
+                          SizedBox(height: 8.0),
+                          _SaveButton(
+                            onPressed: onSavePressed,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
-        ),
-      ),
+            );
+          }),
     );
   }
 

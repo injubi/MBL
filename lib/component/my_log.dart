@@ -26,7 +26,11 @@ class MyLog extends StatelessWidget {
             children: [
               _Content(
                 content: content,
-              )
+              ),
+              SizedBox(width: 16.0),
+              _Category(
+                color: color,
+              ),
             ],
           ),
         ),
@@ -46,5 +50,26 @@ class _Content extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(child: Text(content));
+  }
+}
+
+class _Category extends StatelessWidget {
+  final Color color;
+
+  const _Category({
+    required this.color,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+      ),
+      width: 16.0,
+      height: 16.0,
+    );
   }
 }

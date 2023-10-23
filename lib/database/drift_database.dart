@@ -6,6 +6,7 @@ import 'package:drift/native.dart';
 import 'package:mbl/model/category_color.dart';
 import 'package:mbl/model/log_with_color.dart';
 import 'package:mbl/model/logs.dart';
+import 'package:mbl/screen/home_screen.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -19,6 +20,9 @@ part 'drift_database.g.dart';
 class LocalDatabase extends _$LocalDatabase {
   LocalDatabase() : super(_openConnection());
 
+  Future<Log> getLogById(int id) =>
+      (select(logs)..where((tbl) => tbl.id.equals(id))).getSingle();
+
   Future<int> createLog(LogsCompanion data) => into(logs).insert(data);
 
   Future<int> createCategoryColor(CategoryColorsCompanion data) =>
@@ -26,6 +30,9 @@ class LocalDatabase extends _$LocalDatabase {
 
   Future<List<CategoryColor>> getCategoryColors() =>
       select(categoryColors).get();
+
+  Future<int> updateLogById(int id, LogsCompanion data) =>
+      (update(logs)..where((tbl) => tbl.id.equals(id))).write(data);
 
   Future<int> removeLog(int id) =>
       (delete(logs)..where((tbl) => tbl.id.equals(id))).go();
@@ -46,6 +53,28 @@ class LocalDatabase extends _$LocalDatabase {
               )
               .toList(),
         );
+  }
+
+  Future<Map<DateTime, List<Event>>> getEventsByDate() async {
+    final query = select(logs);
+    final data = await query.get();
+
+    final events = <DateTime, List<Event>>{};
+
+    data.sort((log1, log2) => log1.date.compareTo(log2.date));
+
+    for (final log in data) {
+      final date = log.date;
+      final content = log.content;
+
+      if (!events.containsKey(date)) {
+        events[date] = [];
+      }
+
+      events[date]?.add(Event(content));
+    }
+
+    return events;
   }
 
   @override

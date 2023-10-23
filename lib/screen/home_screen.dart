@@ -25,18 +25,30 @@ class _HomeScreenState extends State<HomeScreen> {
   );
   DateTime focusedDay = DateTime.now();
 
+  Map<DateTime, List<Event>> events = {};
   @override
   Widget build(BuildContext context) {
+    print(selectedDay);
     return Scaffold(
         floatingActionButton: renderFloatingActionButton(),
         body: SafeArea(
           child: Column(
             children: [
-              Calendar(
-                  selectedDay: selectedDay,
-                  focusedDay: focusedDay,
-                  onDaySelected: onDaySelected),
+              FutureBuilder<Map<DateTime, List<Event>>>(
+                  future: GetIt.I<LocalDatabase>().getEventsByDate(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                      events = snapshot.data!;
+                    }
+
+                    return Calendar(
+                        selectedDay: selectedDay,
+                        focusedDay: focusedDay,
+                        onDaySelected: onDaySelected,
+                        events: events);
+                  }),
               TodayBanner(selectedDay: selectedDay),
+              SizedBox(height: 8.0),
               _LogList(selectedDate: selectedDay),
             ],
           ),
@@ -69,6 +81,12 @@ class _HomeScreenState extends State<HomeScreen> {
       this.focusedDay = selectedDay;
     });
   }
+}
+
+class Event {
+  String title;
+
+  Event(this.title);
 }
 
 class _LogList extends StatelessWidget {

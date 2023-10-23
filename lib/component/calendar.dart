@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:mbl/const/colors.dart';
+import 'package:mbl/screen/home_screen.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class Calendar extends StatelessWidget {
   final DateTime? selectedDay;
   final DateTime focusedDay;
   final OnDaySelected? onDaySelected;
+  final Map<DateTime, List<Event>> events;
 
   const Calendar({
     required this.selectedDay,
     required this.focusedDay,
     required this.onDaySelected,
+    required this.events,
     Key? key,
   }) : super(key: key);
 
@@ -24,6 +27,17 @@ class Calendar extends StatelessWidget {
       color: Colors.grey[600],
       fontWeight: FontWeight.w700,
     );
+
+    final hasDataBoxDeco = BoxDecoration(
+      borderRadius: BorderRadius.circular(6.0),
+      color: Colors.blue[500],
+    );
+
+    List<Event> getEventsForDay(DateTime day) {
+      print(events.toString());
+      print(events[day]);
+      return events[day] ?? [];
+    }
 
     return TableCalendar(
       locale: 'ko_KR',
@@ -69,6 +83,7 @@ class Calendar extends StatelessWidget {
             date.month == selectedDay!.month &&
             date.day == selectedDay!.day;
       },
+      eventLoader: getEventsForDay,
     );
   }
 }
