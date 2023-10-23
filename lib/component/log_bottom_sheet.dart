@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mbl/component/custom_text_field.dart';
@@ -5,7 +6,11 @@ import 'package:mbl/const/colors.dart';
 import 'package:mbl/database/drift_database.dart';
 
 class LogBottomSheet extends StatefulWidget {
-  const LogBottomSheet({Key? key}) : super(key: key);
+  final DateTime selectedDate;
+  final int? logId;
+
+  const LogBottomSheet({required this.selectedDate, this.logId, Key? key})
+      : super(key: key);
 
   @override
   State<LogBottomSheet> createState() => _LogBottomSheetState();
@@ -82,6 +87,14 @@ class _LogBottomSheetState extends State<LogBottomSheet> {
     if (formKey.currentState!.validate()) {
       // 에러 x
       formKey.currentState!.save();
+
+      final key = GetIt.I<LocalDatabase>().createLog(LogsCompanion(
+        date: Value(widget.selectedDate),
+        content: Value(content!),
+        colorId: Value(selectedColorId!),
+      ));
+
+      Navigator.of(context).pop();
     } else {
       //에러
     }

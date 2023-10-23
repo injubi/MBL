@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:mbl/model/category_color.dart';
+import 'package:mbl/model/log_with_color.dart';
 import 'package:mbl/model/logs.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -25,6 +26,27 @@ class LocalDatabase extends _$LocalDatabase {
 
   Future<List<CategoryColor>> getCategoryColors() =>
       select(categoryColors).get();
+
+  Future<int> removeLog(int id) =>
+      (delete(logs)..where((tbl) => tbl.id.equals(id))).go();
+
+  Stream<List<LogWithColor>> watchLogs(DateTime date) {
+    final query = select(logs).join(
+        [innerJoin(categoryColors, categoryColors.id.equalsExp(logs.colorId))]);
+
+    query.where(logs.date.equals(date));
+
+    return query.watch().map(
+          (rows) => rows
+              .map(
+                (row) => LogWithColor(
+                  log: row.readTable(logs),
+                  categoryColor: row.readTable(categoryColors),
+                ),
+              )
+              .toList(),
+        );
+  }
 
   @override
   int get schemaVersion => 1;
