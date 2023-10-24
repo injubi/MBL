@@ -1,6 +1,7 @@
 // import 'package:mbl/component/'
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:intl/intl.dart';
 import 'package:mbl/component/calendar.dart';
 import 'package:mbl/component/log_bottom_sheet.dart';
 import 'package:mbl/component/today_banner.dart';
@@ -28,7 +29,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Map<DateTime, List<Event>> events = {};
   @override
   Widget build(BuildContext context) {
-    print(selectedDay);
+    final isThursday = selectedDay.weekday == DateTime.thursday;
+
     return Scaffold(
         floatingActionButton: renderFloatingActionButton(),
         body: SafeArea(
@@ -49,6 +51,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   }),
               TodayBanner(selectedDay: selectedDay),
               SizedBox(height: 8.0),
+              if (isThursday)
+                CreatWeekDataButton(
+                  selectedDate: selectedDay,
+                ),
               _LogList(selectedDate: selectedDay),
             ],
           ),
@@ -89,6 +95,80 @@ class Event {
   Event(this.title);
 }
 
+class CreatWeekDataButton extends StatelessWidget {
+  final DateTime selectedDate;
+
+  const CreatWeekDataButton({required this.selectedDate, Key? key})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        ElevatedButton(
+            onPressed: () {
+              // 버튼을 누를 때 모달 다이얼로그를 표시
+              showDialog(
+                context: context,
+                builder: (context) {
+                  String startDate = DateFormat('yyyy-MM-dd')
+                      .format(selectedDate.subtract(const Duration(days: 7)));
+                  String endDate = DateFormat('yyyy-MM-dd')
+                      .format(selectedDate.subtract(const Duration(days: 1)));
+
+                  return AlertDialog(
+                    title: Text("$startDate~$endDate"),
+                    content: Container(
+                      height: 150,
+                      child: FutureBuilder<List<Log>>(
+                          future: GetIt.I<LocalDatabase>().getWeeksLogs(
+                              selectedDate.subtract(const Duration(days: 7)),
+                              selectedDate.subtract(const Duration(days: 1))),
+                          builder: (context, snapshot) {
+                            List<Log>? logs = [];
+                            if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                              logs = snapshot.data;
+                            }
+                            return SingleChildScrollView(
+                              child: Column(
+                                children: logs!.map((log) {
+                                  return Column(
+                                    children: <Widget>[
+                                      Text(
+                                        log.content,
+                                        style: TextStyle(fontSize: 16.0),
+                                      ),
+                                      SizedBox(
+                                          height: 8.0), // 원하는 간격을 설정할 수 있습니다.
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
+                            );
+                          }),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          // 모달 다이얼로그 닫기
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text('확인'),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+            child: Text('이번 주 업무 일지 모아보기'),
+            style: ButtonStyle(
+                backgroundColor:
+                    MaterialStateProperty.all<Color>(PRIMARY_COLOR))),
+      ],
+    );
+  }
+}
+
 class _LogList extends StatelessWidget {
   final DateTime selectedDate;
 
@@ -108,7 +188,7 @@ class _LogList extends StatelessWidget {
 
           if (snapshot.hasData && snapshot.data!.isEmpty) {
             return const Center(
-              child: Text('스케줄이 없습니다.'),
+              child: Text('업무 내용이 없습니다.'),
             );
           }
 

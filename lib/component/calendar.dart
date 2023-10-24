@@ -34,9 +34,7 @@ class Calendar extends StatelessWidget {
     );
 
     List<Event> getEventsForDay(DateTime day) {
-      print(events.toString());
-      print(events[day]);
-      return events[day] ?? [];
+      return events[day.toUtc()] ?? [];
     }
 
     return TableCalendar(

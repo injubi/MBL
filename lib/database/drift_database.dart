@@ -37,6 +37,11 @@ class LocalDatabase extends _$LocalDatabase {
   Future<int> removeLog(int id) =>
       (delete(logs)..where((tbl) => tbl.id.equals(id))).go();
 
+  Future<List<Log>> getWeeksLogs(DateTime startDate, DateTime endDate) =>
+      (select(logs)
+            ..where((logs) => logs.date.isBetweenValues(startDate, endDate)))
+          .get();
+
   Stream<List<LogWithColor>> watchLogs(DateTime date) {
     final query = select(logs).join(
         [innerJoin(categoryColors, categoryColors.id.equalsExp(logs.colorId))]);
@@ -64,7 +69,7 @@ class LocalDatabase extends _$LocalDatabase {
     data.sort((log1, log2) => log1.date.compareTo(log2.date));
 
     for (final log in data) {
-      final date = log.date;
+      final date = log.date.toUtc();
       final content = log.content;
 
       if (!events.containsKey(date)) {
